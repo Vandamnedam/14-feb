@@ -59,6 +59,26 @@
       -webkit-text-fill-color: transparent;
       backdrop-filter: blur(7px);
       pointer-events:none;
+      opacity:1;
+      transition: opacity 1.1s ease, transform 1.1s ease;
+    }
+    .name.fade-out{
+      opacity:0;
+      transform:translate(-50%,-50%) scale(0.98);
+    }
+    .name.alt{
+      opacity:0;
+      transform:translate(-50%,-50%) scale(1.02);
+    }
+    .name.alt.show{
+      opacity:1;
+      transform:translate(-50%,-50%) scale(1);
+      animation: name-sway 4s ease-in-out infinite;
+    }
+    @keyframes name-sway{
+      0%{ transform:translate(-50%,-50%) rotate(-1.2deg); }
+      50%{ transform:translate(-50%,-50%) rotate(1.2deg); }
+      100%{ transform:translate(-50%,-50%) rotate(-1.2deg); }
     }
 
     .banner{
@@ -176,12 +196,14 @@
 <body>
   <div class="glow-dots"></div>
   <div class="banner" id="banner">С днём святого Валентина, Любимая!❤️</div>
-  <div class="name">Это тебе)</div>
+  <div class="name" id="namePrimary">Это тебе)</div>
+  <div class="name alt" id="nameAlt">Me gustas tu</div>
   <div class="hint">Нажми на сердечкооо</div>
   <div class="gift-bouquet" id="giftBouquet">
     <div class="icon">💐</div>
     <div class="text">И это тоже тебе)</div>
   </div>
+  <audio id="bgm" src="music.mp3" preload="auto" loop></audio>
 
   <script type="module">
     import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
@@ -268,8 +290,17 @@
     const mouse = new THREE.Vector2();
     const banner = document.getElementById("banner");
     const giftBouquet = document.getElementById("giftBouquet");
+    const bgm = document.getElementById("bgm");
+    const namePrimary = document.getElementById("namePrimary");
+    const nameAlt = document.getElementById("nameAlt");
+    const BGM_START = 21.0; // секунды
+    const TRIGGER_DELAY_MS = 4000;
+    const BGM_FADE_MS = 5000;
+    const BGM_VOLUME = 0.2;
 
     let heartsInterval = null;
+    let triggerTimeout = null;
+    let bgmFadeTimer = null;
 
     function triggerGiftBouquet() {
       giftBouquet.classList.remove("show");
@@ -322,9 +353,44 @@
       const hits = raycaster.intersectObject(heart, false);
 
       if (hits.length) {
-        banner.classList.add("show");
-        startHeartsUp();
-        triggerGiftBouquet();
+        if (triggerTimeout) clearTimeout(triggerTimeout);
+        if (bgm) {
+          if (!bgm.paused) {
+            // уже играет — не перезапускаем
+          } else {
+          if (Math.abs(bgm.currentTime - BGM_START) > 0.2) {
+            bgm.currentTime = BGM_START;
+          }
+          bgm.volume = 0.0;
+          bgm.muted = true;
+          if (bgmFadeTimer) cancelAnimationFrame(bgmFadeTimer);
+          bgm.play().then(() => {
+            bgm.muted = false;
+            const fadeStart = performance.now();
+            const tick = () => {
+              const t = (performance.now() - fadeStart) / BGM_FADE_MS;
+              const eased = t * t * (3 - 2 * t);
+              const v = Math.min(BGM_VOLUME, BGM_VOLUME * eased);
+              bgm.volume = v;
+              if (t < 1) {
+                bgmFadeTimer = requestAnimationFrame(tick);
+              } else {
+                bgmFadeTimer = null;
+              }
+            };
+            tick();
+          }).catch(() => {});
+          }
+        }
+        triggerTimeout = setTimeout(() => {
+          if (namePrimary && nameAlt) {
+            namePrimary.classList.add("fade-out");
+            nameAlt.classList.add("show");
+          }
+          banner.classList.add("show");
+          startHeartsUp();
+          triggerGiftBouquet();
+        }, TRIGGER_DELAY_MS);
       }
     }
     window.addEventListener("pointerdown", onPointerDown);
