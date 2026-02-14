@@ -1,9 +1,9 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Настя 💖</title>
+  <title>Любимой Насте</title>
   <style>
     :root{
       --neon:#ff3aa7;
@@ -32,7 +32,6 @@
       z-index:2;
     }
 
-    
     .name{
       position:fixed;
       left:50%; top:50%;
@@ -106,7 +105,6 @@
       text-shadow: 0 0 12px rgba(255,58,167,.35);
     }
 
-    
     .float-heart{
       position:fixed;
       bottom:-40px;
@@ -134,6 +132,40 @@
       background: radial-gradient(circle at 30% 30%, rgba(255,209,234,.9), rgba(255,58,167,.78));
       border-radius: 4px;
     }
+
+    .gift-bouquet{
+      position:fixed;
+      left:18%;
+      top:50%;
+      z-index:6;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+      opacity:0;
+      pointer-events:none;
+      transform: translate(-120%, -50%) rotate(-10deg);
+      transition: transform .7s ease, opacity .7s ease;
+      filter: drop-shadow(0 0 14px rgba(255,123,198,.38));
+    }
+    .gift-bouquet.show{
+      opacity:1;
+      transform: translate(0, -50%) rotate(-3deg);
+    }
+    .gift-bouquet .icon{
+      font-size:92px;
+      line-height:1;
+    }
+    .gift-bouquet .text{
+      font-size:28px;
+      font-weight:900;
+      color:#fff;
+      text-shadow:
+        0 0 10px rgba(255,255,255,.5),
+        0 0 20px rgba(255,58,167,.5);
+      white-space:nowrap;
+    }
+
     @keyframes rise{
       0%   { transform: translateX(var(--sx)) translateY(0) rotate(var(--rot)); opacity: 0; }
       10%  { opacity: var(--op); }
@@ -143,9 +175,13 @@
 </head>
 <body>
   <div class="glow-dots"></div>
-  <div class="banner" id="banner">С днём святого Валентина, любимая 💖</div>
-  <div class="name">Настя</div>
-  <div class="hint">Кликни по сердцу</div>
+  <div class="banner" id="banner">С днём святого Валентина, Любимая!❤️</div>
+  <div class="name">Это тебе)</div>
+  <div class="hint">Нажми на сердечкооо</div>
+  <div class="gift-bouquet" id="giftBouquet">
+    <div class="icon">💐</div>
+    <div class="text">И это тоже тебе)</div>
+  </div>
 
   <script type="module">
     import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
@@ -159,7 +195,6 @@
     const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 100);
     camera.position.set(0, 0.15, 4.3);
 
-    
     scene.add(new THREE.AmbientLight(0xffffff, 0.45));
 
     const pink = new THREE.PointLight(0xff3aa7, 2.6, 30);
@@ -170,19 +205,16 @@
     rim.position.set(-2.6, 0.9, 2.8);
     scene.add(rim);
 
-
     function makeHeartShapeFormula(pointsCount = 320) {
       const pts = [];
       for (let i = 0; i <= pointsCount; i++) {
         const t = (i / pointsCount) * Math.PI * 2;
         const x = 16 * Math.pow(Math.sin(t), 3);
         const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
-        
 
         pts.push(new THREE.Vector2(x, y));
       }
 
-      
       const scale = 0.085;
       for (const p of pts) { p.multiplyScalar(scale); }
 
@@ -193,7 +225,7 @@
     const heartShape = makeHeartShapeFormula();
 
     const geometry = new THREE.ExtrudeGeometry(heartShape, {
-      depth: 0.7,         
+      depth: 0.7,
       bevelEnabled: true,
       bevelThickness: 0.18,
       bevelSize: 0.16,
@@ -205,7 +237,6 @@
     geometry.center();
     geometry.scale(0.92, 0.92, 0.92);
 
-
     const material = new THREE.MeshStandardMaterial({
       color: 0xff3aa7,
       emissive: 0xff2a9a,
@@ -215,13 +246,10 @@
     });
 
     const heart = new THREE.Mesh(geometry, material);
-    
     heart.rotation.x = 0.18;
     heart.rotation.y = Math.PI;
-
     scene.add(heart);
 
-    
     const glowMat = new THREE.MeshStandardMaterial({
       color: 0xff7bc6,
       emissive: 0xff7bc6,
@@ -236,12 +264,18 @@
     glow.rotation.copy(heart.rotation);
     scene.add(glow);
 
-    
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     const banner = document.getElementById("banner");
+    const giftBouquet = document.getElementById("giftBouquet");
 
     let heartsInterval = null;
+
+    function triggerGiftBouquet() {
+      giftBouquet.classList.remove("show");
+      void giftBouquet.offsetWidth;
+      giftBouquet.classList.add("show");
+    }
 
     function spawnFloatingHeart() {
       const h = document.createElement("div");
@@ -290,11 +324,11 @@
       if (hits.length) {
         banner.classList.add("show");
         startHeartsUp();
+        triggerGiftBouquet();
       }
     }
     window.addEventListener("pointerdown", onPointerDown);
 
-    
     let t0 = performance.now();
     function animate(){
       const t = performance.now();
